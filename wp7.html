@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ImR4</title>
+    <link rel="stylesheet" href="{{ url_for('serve_static', filename='mystyles.css') }}">
+    <link rel="stylesheet" href="mystyles.css">
+</head>
+<body>
+    <div class="m1">
+        <div class="head">
+            <h1>Image Rendering</h1>
+        </div>
+        <div class="d1m">
+            <div class="d1s1 polaroid rotate_left">
+                <p>Welcome to the Image Rendering Tool! With this tool, you can easily modify and enhance your images in just a few clicks. Here's how you can get started:</p>
+    
+                <h2>Uploading an Image</h2>
+                <p>Start by selecting an image from your computer. Click the "Choose File" button and browse your files to find the image you want to work with. Once selected, the image will be displayed on the right side of the page.</p>
+    
+                <h2>Adjusting Blur Strength</h2>
+                <p>Use the first slider to control the blur strength. Move the slider to the left to decrease the blur effect and to the right to increase it. The range of blur strength goes from no blur to maximum blur. As you adjust the slider, the value will be displayed below it.</p>
+
+                <h2>Applying Effects</h2>
+                <p>Choose the effect you want to apply to your image: "Sharpen" or "Blur." Once you've adjusted the blur strength and selected an effect, click the corresponding button. The image on the right will be updated with the modified version of your image based on the chosen effect and blur strength.</p>
+    
+                <h2>Downloading Your Image</h2>
+                <p>If you're satisfied with the changes you've made, you can download the modified image by clicking the "Download" button. This will save the image to your computer for further use.</p>
+    
+                <p>Explore the different effects and blur strengths to see how they transform your images. Have fun enhancing your images with the Image Rendering Tool!</p>
+            </div>
+            <div class="d1s2">
+                <div class="igb">
+                    <form id="imageForm" enctype="multipart/form-data">
+                        <input type="file"  accept="image/*" onchange="loadFile(event)" id="imageInput" >
+                    </form>
+                    <p>
+                        <div class="image-container">
+                            <img id="output" width="600"/>
+                        </div>
+                    </p>
+                </div>
+                <div class="rslider_main">
+                    <div class="rslider">
+                        <input type="range"  min="0" max="100" value="50" oninput="updateSharpnessFactor(this.value)">
+                        <p style="color: bisque;" id="sharpnessFactor">50</p>
+                    </div>
+                    <div class="rslider">
+                        <input type="range" min="0" max="100" value="50" oninput="updateBlurStrength(this.value)" >
+                        <p style="color: bisque;" id="blurfactor">50</p>
+                    </div>
+                </div>
+                <div class="butt">
+                    <button onclick="applyFlasksharp()">Sharpen</button>
+                    <button onclick="applyFlaskBlur()">Blur</button>
+                    <button onclick="downloadImage()">Download</button>
+                </div>
+            </div>
+        </div>
+    
+
+        <script>
+            var canvas = document.createElement('canvas');
+            var ctx = canvas.getContext('2d');
+            var image = document.getElementById('output');
+            var selectedImagePath = null;
+ 
+            var blurStrength = 0.5; // Initial value
+            var blurStrengthValue = document.getElementById('blurfactor');
+
+            function updateBlurStrength(value) {
+                blurStrength = (value / 100) * 20;
+                blurStrengthValue.innerText = value;
+            }
+            var sharpnessStrength=1.5
+            var sharpnessValue=document.getElementById('sharpnessFactor');
+            function updateSharpnessFactor(value) {
+                sharpnessStrength = (value / 10);
+                sharpnessValue.innerText = value;
+            }
+
+            var loadFile = function(event) {
+                var imageContainer = document.querySelector('.image-container');
+                image.src = URL.createObjectURL(event.target.files[0]);
+                selectedImagePath = event.target.files[0];
+
+                // Hide the "Choose" button after an image is selected
+                document.getElementById('imageInput').style.display = 'none';
+
+                // Center the image both horizontally and vertically within the container
+                imageContainer.style.display = 'flex';
+                imageContainer.style.justifyContent = 'center';
+                imageContainer.style.alignItems = 'center';
+                imageContainer.style.height = '100%'; // To ensure full height centering
+            };
+
+
+            function downloadImage() {
+                // Trigger the download of the displayed image
+                var downloadLink = document.createElement('a');
+                downloadLink.href = image.src;
+                downloadLink.download = 'processed_image.jpg';
+                downloadLink.target = '_blank'; // To open in a new tab if necessary
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+            }
+
+            function applyFlasksharp() {
+                if (!selectedImagePath) {
+                    alert("Please select an image.");
+                    return;
+                }
+
+                var formData = new FormData();
+                formData.append('image', document.getElementById('imageInput').files[0]);
+                
+                
+                formData.append('blur_strength', blurStrength);
+                formData.append('sharpnesss_factor', sharpnessStrength);
+                fetch('/apply_gaussharp', {
+                    method: 'POST',
+                    body: formData,
+                    
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message === 'Success') {
+                        var outputImage = document.getElementById('output');
+                        outputImage.src = data.processed_image_path;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error applying blur:', error);
+                });
+            }
+
+            function applyFlaskBlur() {
+                if (!selectedImagePath) {
+                    alert("Please select an image.");
+                    return;
+                }
+
+                
+                var formData = new FormData();
+                formData.append('image', document.getElementById('imageInput').files[0]);
+                formData.append('blur_strength', blurStrength);
+
+                fetch('/apply_gaussian_blur', {
+                    method: 'POST',
+                    body: formData,
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message === 'Success') {
+                        var outputImage = document.getElementById('output');
+                        outputImage.src = data.processed_image_path;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error applying blur:', error);
+                });
+            }
+
+            
+        </script>
+    </div>
+</body>
+</html>
