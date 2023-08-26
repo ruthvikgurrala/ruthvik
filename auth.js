@@ -43,7 +43,7 @@ if (loginButton) {
 
             if (storedPassword === password) {
                 sessionStorage.setItem("currentUsername", username);
-                window.location.href = "wp7.html";
+                window.location.href = "index.html";
             } else {
                 alert("Incorrect password. Please try again.");
             }
