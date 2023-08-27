@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Image Enhancing</title>
+    <title>ImR4</title>
     <link rel="stylesheet" href="{{ url_for('serve_static', filename='mystyles.css') }}">
     <link rel="stylesheet" href="mystyles.css">
 </head>
@@ -52,6 +52,8 @@
                 <div class="butt">
                     <button onclick="applyFlasksharp()">Sharpen</button>
                     <button onclick="applyFlaskBlur()">Blur</button>
+                    <button onclick="applyFlasknoise()">denoise</button>
+                    <button onclick="applyFlaskLL()">low light</button>
                     <button onclick="downloadImage()">Download</button>
                 </div>
             </div>
@@ -66,7 +68,6 @@
  
             var blurStrength = 0.5; // Initial value
             var blurStrengthValue = document.getElementById('blurfactor');
-
             function updateBlurStrength(value) {
                 blurStrength = (value / 100) * 20;
                 blurStrengthValue.innerText = value;
@@ -77,6 +78,7 @@
                 sharpnessStrength = (value / 10);
                 sharpnessValue.innerText = value;
             }
+
 
             var loadFile = function(event) {
                 var imageContainer = document.querySelector('.image-container');
@@ -131,6 +133,56 @@
                 })
                 .catch(error => {
                     console.error('Error applying blur:', error);
+                });
+            }
+
+            function applyFlasknoise(){
+                if (!selectedImagePath) {
+                    alert("Please select an image.");
+                    return;
+                }
+
+                var formData = new FormData();
+                formData.append('image', document.getElementById('imageInput').files[0]);
+
+                fetch('/apply_noise', {
+                    method: 'POST',
+                    body: formData,
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message === 'Success') {
+                        var outputImage = document.getElementById('output');
+                        outputImage.src = data.processed_image_path;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error denoising:', error);
+                });
+            }
+
+            function applyFlaskLL(){
+                if (!selectedImagePath) {
+                    alert("Please select an image.");
+                    return;
+                }
+
+                var formData = new FormData();
+                formData.append('image', document.getElementById('imageInput').files[0]);
+
+                fetch('/apply_low_light', {
+                    method: 'POST',
+                    body: formData,
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message === 'Success') {
+                        var outputImage = document.getElementById('output');
+                        outputImage.src = data.processed_image_path;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error low light enhancing:', error);
                 });
             }
 
